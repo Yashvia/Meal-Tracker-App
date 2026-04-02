@@ -1291,5 +1291,10 @@ function saveState() {
   localStorage.setItem('ammaGameState', JSON.stringify(gameState));
 }
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/amma-meals/sw.js');
+}
+</script>
 </body>
 </html>
