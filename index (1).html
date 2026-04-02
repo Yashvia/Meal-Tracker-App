@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Amma's Meals">
+<meta name="theme-color" content="#FF6B35">
+<title>Amma's Meal Journal 🌸</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --saffron: #FF6B35;
+  --turmeric: #F7C59F;
+  --cardamom: #4A7C59;
+  --rose: #E8556D;
+  --gold: #F2A818;
+  --cream: #FFF8F0;
+  --deep: #2D1B0E;
+  --mango: #FFB347;
+  --jade: #3D8B6E;
+  --blush: #FFE4E1;
+  --purple: #8B5CF6;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--cream);
+  color: var(--deep);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ===== LOADING SCREEN ===== */
+#loadingScreen {
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg, #FF6B35 0%, #F2A818 50%, #E8556D 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 9999; transition: opacity 0.8s ease;
+}
+#loadingScreen .flower { font-size: 80px; animation: bloom 1.5s ease infinite alternate; }
+#loadingScreen h1 { color: white; font-family: 'Playfair Display', serif; font-size: 32px; margin: 20px 0 8px; text-align: center; }
+#loadingScreen p { color: rgba(255,255,255,0.85); font-size: 16px; }
+@keyframes bloom { 0% { transform: scale(0.9) rotate(-5deg); } 100% { transform: scale(1.1) rotate(5deg); } }
+
+/* ===== LANGUAGE TOGGLE ===== */
+#langToggle {
+  position: fixed; top: 16px; right: 16px; z-index: 1000;
+  background: white; border-radius: 24px; padding: 6px 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.12); border: 2px solid var(--saffron);
+  font-weight: 700; color: var(--saffron); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ===== MAIN CONTAINER ===== */
+#app { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ===== SCREENS ===== */
+.screen { display: none; flex-direction: column; min-height: 100vh; padding: 20px; animation: fadeSlideIn 0.5s ease; }
+.screen.active { display: flex; }
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ===== MEAL CHECK SCREEN ===== */
+#mealCheckScreen {
+  background: linear-gradient(160deg, #FFF8F0 0%, #FFE9D9 100%);
+  position: relative; overflow: hidden;
+}
+#mealCheckScreen::before {
+  content: ''; position: absolute; top: -60px; right: -60px;
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(255,107,53,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.meal-time-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--saffron); color: white; border-radius: 30px;
+  padding: 8px 20px; font-weight: 700; font-size: 14px;
+  box-shadow: 0 4px 15px rgba(255,107,53,0.4); margin-bottom: 24px;
+  align-self: flex-start; margin-top: 60px;
+}
+
+.big-meal-emoji { font-size: 80px; text-align: center; margin: 20px 0;
+  animation: float 3s ease-in-out infinite; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+.meal-question {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px; font-weight: 900; line-height: 1.3;
+  text-align: center; margin-bottom: 8px; color: var(--deep);
+}
+.meal-question.telugu { font-family: 'Nunito', sans-serif; font-size: 24px; }
+
+.meal-subtitle { text-align: center; color: #888; font-size: 15px; margin-bottom: 40px; }
+
+.answer-buttons { display: flex; gap: 16px; width: 100%; margin-bottom: 20px; }
+
+.btn-yes, .btn-no {
+  flex: 1; border: none; border-radius: 20px; padding: 22px 10px;
+  font-family: 'Nunito', sans-serif; font-size: 18px; font-weight: 800;
+  cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden;
+}
+.btn-yes {
+  background: linear-gradient(135deg, #4A7C59, #3D8B6E);
+  color: white; box-shadow: 0 6px 20px rgba(74,124,89,0.4);
+}
+.btn-yes:active { transform: scale(0.95); }
+.btn-no {
+  background: linear-gradient(135deg, #E8556D, #FF4D6D);
+  color: white; box-shadow: 0 6px 20px rgba(232,85,109,0.4);
+}
+.btn-no:active { transform: scale(0.95); }
+.btn-icon { font-size: 28px; display: block; margin-bottom: 4px; }
+
+/* ===== NO MEAL SCREEN ===== */
+#noMealScreen { background: linear-gradient(160deg, #FFF0F3 0%, #FFE4EC 100%); align-items: center; }
+.reminder-card {
+  background: white; border-radius: 28px; padding: 32px 24px;
+  box-shadow: 0 8px 32px rgba(232,85,109,0.15); text-align: center;
+  width: 100%; margin-top: 80px;
+}
+.reminder-emoji { font-size: 70px; margin-bottom: 16px; animation: shake 0.6s ease 1s; }
+@keyframes shake {
+  0%,100% { transform: rotate(0); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+.reminder-title {
+  font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 900;
+  color: var(--rose); margin-bottom: 12px;
+}
+.reminder-text { color: #666; line-height: 1.6; font-size: 15px; margin-bottom: 24px; }
+.reminder-tips { text-align: left; background: var(--blush); border-radius: 16px; padding: 16px 20px; margin-bottom: 24px; }
+.tip-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; color: #555; }
+.btn-had-meal {
+  background: linear-gradient(135deg, var(--saffron), var(--mango));
+  color: white; border: none; border-radius: 16px; padding: 18px;
+  width: 100%; font-family: 'Nunito', sans-serif; font-size: 17px;
+  font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(255,107,53,0.4);
+}
+.btn-dismiss {
+  background: none; border: none; color: #aaa; font-size: 14px;
+  margin-top: 12px; cursor: pointer; font-family: 'Nunito', sans-serif; padding: 8px;
+}
+
+/* ===== FOOD SELECTION SCREEN ===== */
+#foodScreen { background: var(--cream); padding-bottom: 120px; }
+.food-screen-header {
+  background: linear-gradient(135deg, var(--saffron), var(--mango));
+  margin: -20px -20px 0; padding: 60px 20px 24px;
+  position: relative; overflow: hidden;
+}
+.food-screen-header::after {
+  content: ''; position: absolute; bottom: -20px; left: 0; right: 0;
+  height: 40px; background: var(--cream); border-radius: 24px 24px 0 0;
+}
+.food-screen-header h2 {
+  font-family: 'Playfair Display', serif; font-size: 26px; color: white;
+  font-weight: 900; margin-bottom: 4px;
+}
+.food-screen-header p { color: rgba(255,255,255,0.85); font-size: 14px; }
+
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: white; border-radius: 16px; padding: 12px 16px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin: 24px 0 16px;
+  border: 2px solid transparent; transition: border-color 0.2s;
+}
+.search-bar:focus-within { border-color: var(--saffron); }
+.search-bar input { border: none; outline: none; flex: 1; font-family: 'Nunito', sans-serif; font-size: 15px; }
+.search-bar span { font-size: 20px; }
+
+.category-tabs {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 20px;
+  scrollbar-width: none;
+}
+.category-tabs::-webkit-scrollbar { display: none; }
+.cat-tab {
+  flex-shrink: 0; padding: 8px 16px; border-radius: 30px; border: 2px solid #E5E7EB;
+  background: white; font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; transition: all 0.2s;
+}
+.cat-tab.active { background: var(--saffron); border-color: var(--saffron); color: white; }
+
+.food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.food-card {
+  background: white; border-radius: 20px; padding: 14px 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06); cursor: pointer;
+  transition: all 0.2s ease; border: 2px solid transparent; position: relative;
+}
+.food-card.selected { border-color: var(--cardamom); background: #F0FBF4; }
+.food-card:active { transform: scale(0.97); }
+
+.food-emoji { font-size: 36px; text-align: center; margin-bottom: 8px; }
+.food-name { font-weight: 700; font-size: 13px; text-align: center; color: var(--deep); line-height: 1.2; }
+.food-name-tel { font-size: 11px; color: #888; text-align: center; margin-top: 2px; }
+
+.food-qty-control {
+  display: none; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 10px;
+}
+.food-card.selected .food-qty-control { display: flex; }
+.qty-btn {
+  width: 28px; height: 28px; border-radius: 50%; border: none;
+  font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.qty-minus { background: #FFE5D9; color: var(--saffron); }
+.qty-plus { background: var(--saffron); color: white; }
+.qty-display { font-weight: 800; font-size: 14px; color: var(--deep); min-width: 24px; text-align: center; }
+.qty-unit { font-size: 10px; color: #888; text-align: center; margin-top: 2px; }
+
+.food-check {
+  position: absolute; top: 8px; right: 8px; width: 20px; height: 20px;
+  background: var(--cardamom); border-radius: 50%; display: none;
+  align-items: center; justify-content: center; color: white; font-size: 11px;
+}
+.food-card.selected .food-check { display: flex; }
+
+/* ===== FLOATING SUBMIT BUTTON ===== */
+#submitFoodBtn {
+  position: fixed; bottom: 24px; left: 20px; right: 20px;
+  background: linear-gradient(135deg, var(--cardamom), var(--jade));
+  color: white; border: none; border-radius: 20px; padding: 20px;
+  font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 800;
+  cursor: pointer; box-shadow: 0 8px 24px rgba(74,124,89,0.5);
+  display: none; transition: all 0.3s ease; z-index: 100;
+}
+#submitFoodBtn.visible { display: block; animation: slideUp 0.4s ease; }
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ===== SCORE SCREEN ===== */
+#scoreScreen { background: linear-gradient(160deg, #F0FBF4 0%, #E8F5E9 100%); align-items: center; padding-bottom: 40px; }
+
+.score-header { text-align: center; margin-top: 60px; margin-bottom: 24px; }
+.score-emoji { font-size: 70px; animation: pop 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+.score-circle {
+  width: 160px; height: 160px; border-radius: 50%; margin: 0 auto 24px;
+  background: white; box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative;
+}
+.score-circle svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+.score-number { font-family: 'Playfair Display', serif; font-size: 52px; font-weight: 900; color: var(--deep); line-height: 1; }
+.score-label { font-size: 12px; color: #888; font-weight: 600; }
+
+.score-title {
+  font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900;
+  text-align: center; margin-bottom: 8px; color: var(--deep);
+}
+.score-comment {
+  text-align: center; color: #555; font-size: 15px; line-height: 1.6;
+  padding: 0 20px; margin-bottom: 24px;
+}
+
+.health-benefits {
+  width: 100%; background: white; border-radius: 24px; padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px;
+}
+.health-benefits h3 { font-weight: 800; color: var(--deep); margin-bottom: 14px; font-size: 16px; }
+.benefit-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid #F5F5F5;
+}
+.benefit-item:last-child { border-bottom: none; }
+.benefit-icon { font-size: 28px; }
+.benefit-text { flex: 1; }
+.benefit-text strong { display: block; font-size: 14px; color: var(--deep); }
+.benefit-text span { font-size: 12px; color: #888; }
+
+/* ===== XP / REWARD SECTION ===== */
+.xp-card {
+  width: 100%; background: linear-gradient(135deg, var(--gold), var(--mango));
+  border-radius: 24px; padding: 20px; color: white; margin-bottom: 16px;
+  box-shadow: 0 6px 20px rgba(242,168,24,0.4);
+}
+.xp-card h3 { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+.xp-bar-wrap { background: rgba(255,255,255,0.3); border-radius: 20px; height: 14px; overflow: hidden; margin-bottom: 8px; }
+.xp-bar-fill { height: 100%; background: white; border-radius: 20px; transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.xp-label { font-size: 13px; opacity: 0.9; }
+
+.unlock-preview {
+  width: 100%; background: white; border-radius: 24px; padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px;
+  text-align: center;
+}
+.unlock-preview h3 { font-weight: 800; color: var(--deep); margin-bottom: 12px; font-size: 16px; }
+.baby-photo-blur {
+  width: 120px; height: 120px; border-radius: 20px;
+  background: linear-gradient(135deg, #FFB347, #FF6B35);
+  margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+  font-size: 50px; filter: blur(6px); position: relative; overflow: hidden;
+}
+.unlock-text { font-size: 13px; color: #888; }
+
+.btn-done {
+  background: linear-gradient(135deg, var(--saffron), var(--rose));
+  color: white; border: none; border-radius: 20px; padding: 20px;
+  width: 100%; font-family: 'Nunito', sans-serif; font-size: 17px;
+  font-weight: 800; cursor: pointer; box-shadow: 0 8px 24px rgba(255,107,53,0.4);
+}
+
+/* ===== REWARD UNLOCK SCREEN ===== */
+#rewardScreen {
+  display: none; position: fixed; inset: 0; z-index: 5000;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--mango) 50%, var(--rose) 100%);
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 24px; animation: none;
+}
+#rewardScreen.active { display: flex; animation: fadeSlideIn 0.5s ease; }
+.confetti-wrap { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.confetti { position: absolute; width: 10px; height: 10px; animation: confettiFall 3s linear forwards; }
+@keyframes confettiFall {
+  from { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+.reward-content { text-align: center; z-index: 1; }
+.reward-title { font-family: 'Playfair Display', serif; font-size: 32px; color: white; font-weight: 900; margin-bottom: 8px; }
+.reward-subtitle { color: rgba(255,255,255,0.9); font-size: 16px; margin-bottom: 32px; }
+.baby-photo-reveal {
+  width: 200px; height: 200px; border-radius: 24px; margin: 0 auto 24px;
+  background: white; box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 100px; animation: pop 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+.btn-close-reward {
+  background: white; color: var(--saffron); border: none; border-radius: 16px;
+  padding: 16px 40px; font-family: 'Nunito', sans-serif; font-size: 16px;
+  font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+/* ===== HOME / DASHBOARD SCREEN ===== */
+#homeScreen { background: var(--cream); }
+.home-header {
+  background: linear-gradient(135deg, var(--saffron) 0%, var(--mango) 100%);
+  margin: -20px -20px 0; padding: 60px 20px 40px;
+  position: relative; overflow: hidden;
+}
+.home-header::before {
+  content: '🌸'; position: absolute; right: 20px; top: 20px;
+  font-size: 60px; opacity: 0.3;
+}
+.home-greeting { color: rgba(255,255,255,0.85); font-size: 15px; margin-bottom: 4px; }
+.home-name { font-family: 'Playfair Display', serif; font-size: 30px; color: white; font-weight: 900; }
+
+.streak-bar {
+  display: flex; gap: 12px; background: rgba(255,255,255,0.2);
+  border-radius: 20px; padding: 16px; margin-top: 20px;
+}
+.streak-item { flex: 1; text-align: center; }
+.streak-num { font-size: 24px; font-weight: 800; color: white; }
+.streak-lbl { font-size: 11px; color: rgba(255,255,255,0.8); }
+
+.home-section { margin: 24px 0 0; }
+.section-title { font-weight: 800; font-size: 18px; color: var(--deep); margin-bottom: 12px; }
+
+.today-meals { display: flex; gap: 10px; }
+.meal-pill {
+  flex: 1; background: white; border-radius: 18px; padding: 14px 10px;
+  text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.meal-pill-emoji { font-size: 28px; margin-bottom: 4px; }
+.meal-pill-label { font-size: 11px; font-weight: 700; color: #888; }
+.meal-pill.done { background: #F0FBF4; border: 2px solid var(--cardamom); }
+.meal-pill.done .meal-pill-label { color: var(--cardamom); }
+
+.progress-section {
+  background: white; border-radius: 24px; padding: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 16px;
+}
+.mini-xp-wrap { background: #F5F5F5; border-radius: 20px; height: 10px; overflow: hidden; margin: 10px 0 6px; }
+.mini-xp-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--saffron)); border-radius: 20px; transition: width 1s ease; }
+
+.rewards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.reward-card {
+  background: white; border-radius: 16px; padding: 14px 8px;
+  text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.reward-card-emoji { font-size: 32px; }
+.reward-card-name { font-size: 11px; font-weight: 700; color: #888; margin-top: 4px; }
+.reward-card.locked { filter: grayscale(0.5); }
+.reward-card.locked .reward-card-emoji { filter: blur(3px); }
+.reward-card.unlocked { border: 2px solid var(--gold); }
+
+.btn-check-meal-now {
+  background: linear-gradient(135deg, var(--saffron), var(--rose));
+  color: white; border: none; border-radius: 18px; padding: 18px;
+  width: 100%; font-family: 'Nunito', sans-serif; font-size: 16px;
+  font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(255,107,53,0.4);
+  margin-bottom: 24px;
+}
+
+/* ===== VOICE REMINDER POPUP ===== */
+#voicePopup {
+  display: none; position: fixed; inset: 0; z-index: 3000;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  align-items: flex-end;
+}
+#voicePopup.active { display: flex; }
+.voice-card {
+  background: white; border-radius: 32px 32px 0 0; padding: 32px 24px 40px;
+  width: 100%; animation: slideUpCard 0.4s ease;
+}
+@keyframes slideUpCard { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.voice-avatar { width: 80px; height: 80px; border-radius: 50%; font-size: 44px;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.voice-name { text-align: center; font-weight: 800; font-size: 18px; color: var(--deep); margin-bottom: 8px; }
+.voice-message { text-align: center; color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 24px; }
+.voice-message.telugu { font-size: 18px; }
+.voice-btns { display: flex; gap: 12px; }
+.btn-voice-close { flex: 1; background: #F5F5F5; border: none; border-radius: 16px; padding: 16px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; }
+.btn-voice-log { flex: 2; background: linear-gradient(135deg, var(--saffron), var(--mango)); color: white; border: none; border-radius: 16px; padding: 16px; font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; }
+
+/* ===== MISC ===== */
+.spacer { flex: 1; }
+.mt-auto { margin-top: auto; }
+.text-center { text-align: center; }
+
+/* ===== SNACK SCREEN ===== */
+#snackScreen { background: linear-gradient(160deg, #FFF8E7 0%, #FFF0C2 100%); align-items: center; }
+.snack-card {
+  background: white; border-radius: 28px; padding: 32px 24px;
+  box-shadow: 0 8px 32px rgba(242,168,24,0.15); text-align: center;
+  width: 100%; margin-top: 80px;
+}
+.snack-title { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; color: var(--gold); margin-bottom: 12px; }
+.snack-text { color: #666; line-height: 1.6; font-size: 15px; margin-bottom: 24px; }
+.healthy-snacks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+.snack-opt { background: var(--cream); border-radius: 14px; padding: 12px 6px; text-align: center; }
+.snack-opt-emoji { font-size: 28px; }
+.snack-opt-name { font-size: 11px; font-weight: 700; color: #666; margin-top: 4px; }
+.btn-snack-close { background: linear-gradient(135deg, var(--gold), var(--mango)); color: white; border: none; border-radius: 16px; padding: 18px; width: 100%; font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 800; cursor: pointer; }
+
+/* Animations */
+.pulse { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+</style>
+</head>
+
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen">
+  <div class="flower">🌸</div>
+  <h1>Amma's Meal Journal</h1>
+  <p>అమ్మ భోజన పత్రిక</p>
+</div>
+
+<!-- Language Toggle -->
+<button id="langToggle" onclick="toggleLang()">🇮🇳 తెలుగు</button>
+
+<!-- App Container -->
+<div id="app">
+
+  <!-- ===== HOME DASHBOARD ===== -->
+  <div id="homeScreen" class="screen">
+    <div class="home-header">
+      <div class="home-greeting" id="homeGreeting">Good morning!</div>
+      <div class="home-name">Amma 💐</div>
+      <div class="streak-bar">
+        <div class="streak-item">
+          <div class="streak-num" id="streakCount">0</div>
+          <div class="streak-lbl">Day Streak 🔥</div>
+        </div>
+        <div class="streak-item">
+          <div class="streak-num" id="totalXP">0</div>
+          <div class="streak-lbl">Total XP ⭐</div>
+        </div>
+        <div class="streak-item">
+          <div class="streak-num" id="mealsLogged">0</div>
+          <div class="streak-lbl">Meals Logged 🍱</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding: 0 0 20px;">
+      <div class="home-section">
+        <div class="section-title">Today's Meals</div>
+        <div class="today-meals" id="todayMeals">
+          <div class="meal-pill" id="pill-breakfast">
+            <div class="meal-pill-emoji">🌅</div>
+            <div class="meal-pill-label">Breakfast</div>
+          </div>
+          <div class="meal-pill" id="pill-lunch">
+            <div class="meal-pill-emoji">☀️</div>
+            <div class="meal-pill-label">Lunch</div>
+          </div>
+          <div class="meal-pill" id="pill-dinner">
+            <div class="meal-pill-emoji">🌙</div>
+            <div class="meal-pill-label">Dinner</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-section">
+        <div class="section-title">Your Progress ⭐</div>
+        <div class="progress-section">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:#888;">
+            <span>Level <strong id="userLevel">1</strong></span>
+            <span id="xpLabel">0 / 100 XP</span>
+          </div>
+          <div class="mini-xp-wrap"><div class="mini-xp-fill" id="miniXpFill" style="width:0%"></div></div>
+          <div style="font-size:12px;color:#888;">🎁 Next unlock: <span id="nextRewardLabel">Baby photo!</span></div>
+        </div>
+      </div>
+
+      <button class="btn-check-meal-now pulse" onclick="showMealCheck()">
+        🍽️ Log Current Meal
+      </button>
+
+      <div class="home-section">
+        <div class="section-title">Rewards Gallery 🏆</div>
+        <div class="rewards-grid" id="rewardsGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MEAL CHECK SCREEN ===== -->
+  <div id="mealCheckScreen" class="screen">
+    <div class="meal-time-badge" id="mealTimeBadge">🌅 Breakfast Time</div>
+    <div class="big-meal-emoji" id="mealEmoji">🍳</div>
+    <div class="meal-question" id="mealQuestion">Did you have breakfast today?</div>
+    <div class="meal-subtitle" id="mealSubtitle">It's the most important meal of the day!</div>
+    <div class="spacer"></div>
+    <div class="answer-buttons">
+      <button class="btn-no" onclick="showNoMeal()">
+        <span class="btn-icon">😔</span>
+        <span id="btnNoText">No, not yet</span>
+      </button>
+      <button class="btn-yes" onclick="showFoodSelection()">
+        <span class="btn-icon">😊</span>
+        <span id="btnYesText">Yes, I did!</span>
+      </button>
+    </div>
+    <button class="btn-dismiss" onclick="goHome()">← Back to home</button>
+  </div>
+
+  <!-- ===== NO MEAL SCREEN ===== -->
+  <div id="noMealScreen" class="screen">
+    <div class="reminder-card">
+      <div class="reminder-emoji" id="reminderEmoji">🫶</div>
+      <div class="reminder-title" id="reminderTitle">Amma, please eat!</div>
+      <div class="reminder-text" id="reminderText">
+        Your children worry about you. Eating regular meals keeps you energetic, healthy, and happy!
+      </div>
+      <div class="reminder-tips">
+        <div class="tip-item">🥗 A proper meal beats 10 snacks</div>
+        <div class="tip-item">⚡ Regular meals = more energy</div>
+        <div class="tip-item">💆 Better mood, better sleep</div>
+        <div class="tip-item">✨ Glowing skin & strong hair!</div>
+      </div>
+      <button class="btn-had-meal" onclick="showFoodSelection()">
+        I just ate! Let me log it 🍱
+      </button>
+      <button class="btn-dismiss" onclick="goHome()">Remind me later</button>
+    </div>
+  </div>
+
+  <!-- ===== SNACK REDIRECT SCREEN ===== -->
+  <div id="snackScreen" class="screen">
+    <div class="snack-card">
+      <div style="font-size:60px;margin-bottom:12px;">🍎</div>
+      <div class="snack-title">Snack Time, Amma!</div>
+      <div class="snack-text" id="snackText">
+        It's snack time! Choose something light and healthy. Here are some great options:
+      </div>
+      <div class="healthy-snacks">
+        <div class="snack-opt"><div class="snack-opt-emoji">🍌</div><div class="snack-opt-name">Banana</div></div>
+        <div class="snack-opt"><div class="snack-opt-emoji">🥛</div><div class="snack-opt-name">Buttermilk</div></div>
+        <div class="snack-opt"><div class="snack-opt-emoji">🥜</div><div class="snack-opt-name">Peanuts</div></div>
+        <div class="snack-opt"><div class="snack-opt-emoji">🍊</div><div class="snack-opt-name">Orange</div></div>
+        <div class="snack-opt"><div class="snack-opt-emoji">🥗</div><div class="snack-opt-name">Salad</div></div>
+        <div class="snack-opt"><div class="snack-opt-emoji">☕</div><div class="snack-opt-name">Herbal Tea</div></div>
+      </div>
+      <div style="font-size:13px;color:#aaa;margin-bottom:16px;">Avoid biscuits, chips & sweets — they make you more tired!</div>
+      <button class="btn-snack-close" onclick="goHome()">Got it! 🙏</button>
+    </div>
+  </div>
+
+  <!-- ===== FOOD SELECTION SCREEN ===== -->
+  <div id="foodScreen" class="screen">
+    <div class="food-screen-header">
+      <h2 id="foodScreenTitle">What did you eat? 🍽️</h2>
+      <p>Tap foods you had • Adjust quantity with + −</p>
+    </div>
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" id="foodSearch" placeholder="Search food..." oninput="filterFood(this.value)">
+    </div>
+    <div class="category-tabs" id="categoryTabs"></div>
+    <div class="food-grid" id="foodGrid"></div>
+    <button id="submitFoodBtn" onclick="showScore()">
+      ✅ Done! Calculate My Score
+    </button>
+  </div>
+
+  <!-- ===== SCORE SCREEN ===== -->
+  <div id="scoreScreen" class="screen">
+    <div class="score-header">
+      <div class="score-emoji" id="scoreEmoji">🌟</div>
+    </div>
+
+    <div class="score-circle" id="scoreCircleWrap">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="70" fill="none" stroke="#F0F0F0" stroke-width="12"/>
+        <circle id="scoreArc" cx="80" cy="80" r="70" fill="none" stroke="#4A7C59" stroke-width="12"
+          stroke-dasharray="440" stroke-dashoffset="440" stroke-linecap="round"
+          style="transition: stroke-dashoffset 1.5s ease;"/>
+      </svg>
+      <div class="score-number" id="scoreNumber">—</div>
+      <div class="score-label">/ 100</div>
+    </div>
+
+    <div class="score-title" id="scoreTitle">Excellent meal!</div>
+    <div class="score-comment" id="scoreComment">Great job maintaining a healthy diet!</div>
+
+    <div class="health-benefits" id="healthBenefits"></div>
+
+    <div class="xp-card">
+      <h3>⭐ XP Earned This Meal!</h3>
+      <div class="xp-bar-wrap">
+        <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+      </div>
+      <div class="xp-label" id="xpEarnedLabel">+15 XP earned • 35 / 100 XP total</div>
+    </div>
+
+    <div class="unlock-preview">
+      <h3>🎁 Next Reward</h3>
+      <div class="baby-photo-blur">🍼</div>
+      <div class="unlock-text" id="unlockText">Earn 50 more XP to unlock a cute family photo!</div>
+    </div>
+
+    <button class="btn-done" onclick="finishLogging()">
+      🎉 Done! Back to my day
+    </button>
+  </div>
+
+</div><!-- end #app -->
+
+<!-- ===== VOICE POPUP ===== -->
+<div id="voicePopup">
+  <div class="voice-card">
+    <div class="voice-avatar" id="voiceAvatar">👨‍👩‍👧</div>
+    <div class="voice-name" id="voiceName">From the family 💕</div>
+    <div class="voice-message" id="voiceMessage"></div>
+    <div class="voice-btns">
+      <button class="btn-voice-close" onclick="closeVoicePopup()">Later</button>
+      <button class="btn-voice-log" onclick="closeVoicePopup(); showMealCheck()">Log meal 🍱</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REWARD UNLOCK SCREEN ===== -->
+<div id="rewardScreen">
+  <div class="confetti-wrap" id="confettiWrap"></div>
+  <div class="reward-content">
+    <div class="reward-title">🎉 Reward Unlocked!</div>
+    <div class="reward-subtitle">You earned this with your healthy eating!</div>
+    <div class="baby-photo-reveal" id="rewardPhotoEmoji">📸</div>
+    <div style="color:white;font-size:16px;margin-bottom:24px;" id="rewardName">Family Moment</div>
+    <button class="btn-close-reward" onclick="closeReward()">Yayyy! 🥳</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let lang = 'en';
+let currentMeal = 'breakfast';
+let selectedFoods = {};
+let gameState = JSON.parse(localStorage.getItem('ammaGameState') || JSON.stringify({
+  xp: 0, level: 1, streak: 0, mealsLogged: 0, lastDate: '', unlockedRewards: [],
+  todayMeals: { breakfast: false, lunch: false, dinner: false, brunch: false }
+}));
+
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+const T = {
+  en: {
+    breakfast: 'Breakfast', lunch: 'Lunch', dinner: 'Dinner', brunch: 'Brunch', snack: 'Snack Time',
+    mealQ: { breakfast: 'Did you have breakfast today?', lunch: 'Did you have lunch today?',
+      dinner: 'Did you have dinner today?', brunch: 'Did you have brunch today?' },
+    mealSub: { breakfast: "Start your day strong, Amma! 💪", lunch: "Keep your energy up! ☀️",
+      dinner: "End the day with a good meal! 🌙", brunch: "A lovely mid-morning meal! 🌸" },
+    yes: 'Yes, I did!', no: 'No, not yet',
+    remTitle: 'Amma, please eat!',
+    remText: 'Your children worry about you. Eating regular meals keeps you energetic and happy!',
+    greeting: { morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening' }
+  },
+  te: {
+    breakfast: 'అల్పాహారం', lunch: 'మధ్యాహ్నం భోజనం', dinner: 'రాత్రి భోజనం', brunch: 'బ్రంచ్', snack: 'స్నాక్ టైమ్',
+    mealQ: {
+      breakfast: 'అమ్మా, ఈరోజు అల్పాహారం తిన్నారా?',
+      lunch: 'అమ్మా, మధ్యాహ్నం భోజనం చేసారా?',
+      dinner: 'అమ్మా, రాత్రి భోజనం తిన్నారా?',
+      brunch: 'అమ్మా, బ్రంచ్ తిన్నారా?'
+    },
+    mealSub: {
+      breakfast: "శక్తిగా రోజు మొదలుపెట్టండి! 💪",
+      lunch: "శక్తి కోల్పోకుండా తినండి! ☀️",
+      dinner: "రాత్రి మంచి భోజనం చేయండి! 🌙",
+      brunch: "సుందరమైన మధ్యాహ్న భోజనం! 🌸"
+    },
+    yes: 'అవును, తిన్నాను!', no: 'లేదు, ఇంకా తినలేదు',
+    remTitle: 'అమ్మా, తినండి!',
+    remText: 'మీ పిల్లలకు మీరంటే చాలా ప్రేమ. సరిగ్గా తింటే ఆరోగ్యంగా ఉంటారు!',
+    greeting: { morning: 'శుభోదయం', afternoon: 'శుభ మధ్యాహ్నం', evening: 'శుభ సాయంత్రం' }
+  }
+};
+
+// ============================================================
+// FOOD DATABASE
+// ============================================================
+const FOODS = [
+  // Grains & Rice
+  { id:'rice', name:'Rice', tel:'అన్నం', emoji:'🍚', cat:'Grains', unit:'hastam', healthScore:6, tags:['carbs'] },
+  { id:'brown_rice', name:'Brown Rice', tel:'బ్రౌన్ రైస్', emoji:'🌾', cat:'Grains', unit:'hastam', healthScore:8, tags:['fiber','carbs'] },
+  { id:'roti', name:'Roti / Chapati', tel:'రొట్టె', emoji:'🫓', cat:'Grains', unit:'roti', healthScore:7, tags:['fiber','carbs'] },
+  { id:'idly', name:'Idly', tel:'ఇడ్లీ', emoji:'🫓', cat:'Grains', unit:'idly', healthScore:8, tags:['protein','probiotic'] },
+  { id:'dosa', name:'Dosa', tel:'దోస', emoji:'🥞', cat:'Grains', unit:'dosa', healthScore:7, tags:['protein'] },
+  { id:'upma', name:'Upma', tel:'ఉప్మా', emoji:'🥣', cat:'Grains', unit:'bowl', healthScore:7, tags:['fiber'] },
+  { id:'pongal', name:'Pongal', tel:'పొంగలి', emoji:'🍲', cat:'Grains', unit:'bowl', healthScore:7, tags:['protein'] },
+  { id:'biryani', name:'Biryani', tel:'బిర్యానీ', emoji:'🍛', cat:'Grains', unit:'plate', healthScore:5, tags:['protein','carbs'] },
+  { id:'fried_rice', name:'Fried Rice', tel:'ఫ్రైడ్ రైస్', emoji:'🍳', cat:'Grains', unit:'plate', healthScore:4, tags:['carbs'] },
+  { id:'cornflakes', name:'Cornflakes', tel:'కార్న్‌ఫ్లేక్స్', emoji:'🥣', cat:'Grains', unit:'bowl', healthScore:6, tags:['carbs'] },
+  { id:'oats', name:'Oats', tel:'ఓట్స్', emoji:'🥣', cat:'Grains', unit:'bowl', healthScore:9, tags:['fiber','protein'] },
+  { id:'muesli', name:'Muesli', tel:'ముయెస్లీ', emoji:'🥣', cat:'Grains', unit:'bowl', healthScore:8, tags:['fiber'] },
+  { id:'pasta', name:'Pasta', tel:'పాస్తా', emoji:'🍝', cat:'Grains', unit:'plate', healthScore:5, tags:['carbs'] },
+  { id:'sandwich', name:'Sandwich', tel:'శాండ్‌విచ్', emoji:'🥪', cat:'Grains', unit:'sandwich', healthScore:6, tags:['protein'] },
+
+  // Proteins - Veg
+  { id:'dal', name:'Dal / Lentils', tel:'పప్పు', emoji:'🫘', cat:'Protein', unit:'bowl', healthScore:9, tags:['protein','fiber'] },
+  { id:'sambar', name:'Sambar', tel:'సాంబార్', emoji:'🍲', cat:'Protein', unit:'bowl', healthScore:8, tags:['protein','fiber'] },
+  { id:'egg', name:'Egg', tel:'గుడ్డు', emoji:'🥚', cat:'Protein', unit:'egg', healthScore:8, tags:['protein'] },
+  { id:'paneer', name:'Paneer', tel:'పనీర్', emoji:'🧀', cat:'Protein', unit:'bowl', healthScore:7, tags:['protein','calcium'] },
+  { id:'paneer_salad', name:'Paneer Salad', tel:'పనీర్ సలాడ్', emoji:'🥗', cat:'Protein', unit:'bowl', healthScore:9, tags:['protein','fiber'] },
+  { id:'rajma', name:'Rajma / Kidney Beans', tel:'రాజ్మా', emoji:'🫘', cat:'Protein', unit:'bowl', healthScore:9, tags:['protein','fiber'] },
+  { id:'chana', name:'Chana / Chickpeas', tel:'చెనగలు', emoji:'🫘', cat:'Protein', unit:'bowl', healthScore:9, tags:['protein','fiber'] },
+
+  // Proteins - Non Veg
+  { id:'fish', name:'Fish Curry', tel:'చేపల కూర', emoji:'🐟', cat:'Non-Veg', unit:'piece', healthScore:8, tags:['protein','omega3'] },
+  { id:'chicken', name:'Chicken Curry', tel:'కోడి కూర', emoji:'🍗', cat:'Non-Veg', unit:'piece', healthScore:7, tags:['protein'] },
+  { id:'prawns', name:'Prawns', tel:'రొయ్యలు', emoji:'🦐', cat:'Non-Veg', unit:'bowl', healthScore:7, tags:['protein'] },
+  { id:'egg_curry', name:'Egg Curry', tel:'గుడ్డు కూర', emoji:'🥘', cat:'Non-Veg', unit:'bowl', healthScore:7, tags:['protein'] },
+
+  // Vegetables & Curries
+  { id:'carrot', name:'Carrot', tel:'గాజర్', emoji:'🥕', cat:'Veggies', unit:'bowl', healthScore:9, tags:['vitamins','fiber'] },
+  { id:'beans', name:'Beans', tel:'చిక్కుడు కాయలు', emoji:'🫛', cat:'Veggies', unit:'bowl', healthScore:9, tags:['fiber','protein'] },
+  { id:'brinjal', name:'Brinjal Curry', tel:'వంకాయ కూర', emoji:'🍆', cat:'Veggies', unit:'bowl', healthScore:7, tags:['fiber'] },
+  { id:'potato', name:'Potato Curry', tel:'బంగాళాదుంప', emoji:'🥔', cat:'Veggies', unit:'bowl', healthScore:5, tags:['carbs'] },
+  { id:'gourd', name:'Gourd Curry', tel:'సొర కాయ కూర', emoji:'🥒', cat:'Veggies', unit:'bowl', healthScore:9, tags:['fiber','vitamins'] },
+  { id:'tomato', name:'Tomato', tel:'టొమాటో', emoji:'🍅', cat:'Veggies', unit:'piece', healthScore:8, tags:['vitamins'] },
+  { id:'spinach', name:'Spinach / Palak', tel:'పాలకూర', emoji:'🥬', cat:'Veggies', unit:'bowl', healthScore:10, tags:['iron','vitamins'] },
+  { id:'drumstick', name:'Drumstick', tel:'మునగకాయ', emoji:'🌿', cat:'Veggies', unit:'piece', healthScore:9, tags:['iron','vitamins'] },
+  { id:'bhindi', name:'Okra / Bhindi', tel:'బెండకాయ', emoji:'🥦', cat:'Veggies', unit:'bowl', healthScore:8, tags:['fiber'] },
+  { id:'salad', name:'Salad', tel:'సలాడ్', emoji:'🥗', cat:'Veggies', unit:'bowl', healthScore:10, tags:['fiber','vitamins'] },
+
+  // Fruits
+  { id:'banana', name:'Banana', tel:'అరటి పండు', emoji:'🍌', cat:'Fruits', unit:'piece', healthScore:8, tags:['potassium','energy'] },
+  { id:'apple', name:'Apple', tel:'ఆపిల్', emoji:'🍎', cat:'Fruits', unit:'piece', healthScore:9, tags:['fiber','vitamins'] },
+  { id:'mango', name:'Mango', tel:'మామిడి పండు', emoji:'🥭', cat:'Fruits', unit:'piece', healthScore:8, tags:['vitamins'] },
+  { id:'orange', name:'Orange', tel:'నారింజ', emoji:'🍊', cat:'Fruits', unit:'piece', healthScore:9, tags:['vitaminC'] },
+  { id:'grapes', name:'Grapes', tel:'ద్రాక్ష పండ్లు', emoji:'🍇', cat:'Fruits', unit:'handful', healthScore:8, tags:['antioxidants'] },
+  { id:'papaya', name:'Papaya', tel:'బొప్పాయి', emoji:'🍈', cat:'Fruits', unit:'piece', healthScore:9, tags:['fiber','vitamins'] },
+
+  // Drinks
+  { id:'grape_juice', name:'Grape Juice', tel:'ద్రాక్ష రసం', emoji:'🍇', cat:'Drinks', unit:'glass', healthScore:7, tags:['antioxidants'] },
+  { id:'buttermilk', name:'Buttermilk', tel:'మజ్జిగ', emoji:'🥛', cat:'Drinks', unit:'glass', healthScore:9, tags:['probiotic','calcium'] },
+  { id:'milk', name:'Milk', tel:'పాలు', emoji:'🥛', cat:'Drinks', unit:'glass', healthScore:8, tags:['calcium','protein'] },
+  { id:'coconut_water', name:'Coconut Water', tel:'కొబ్బరి నీరు', emoji:'🥥', cat:'Drinks', unit:'glass', healthScore:9, tags:['electrolytes'] },
+  { id:'fruit_juice', name:'Fresh Juice', tel:'పండ్ల రసం', emoji:'🍹', cat:'Drinks', unit:'glass', healthScore:7, tags:['vitamins'] },
+
+  // More foods
+  { id:'curd', name:'Curd / Yogurt', tel:'పెరుగు', emoji:'🫙', cat:'Dairy', unit:'bowl', healthScore:9, tags:['probiotic','calcium'] },
+  { id:'ghee', name:'Ghee', tel:'నెయ్యి', emoji:'🧈', cat:'Dairy', unit:'spoon', healthScore:6, tags:['healthy fats'] },
+  { id:'pickle', name:'Pickle', tel:'పచ్చడి', emoji:'🫙', cat:'Condiments', unit:'spoon', healthScore:4, tags:[] },
+  { id:'chutney', name:'Coconut Chutney', tel:'కొబ్బరి చట్నీ', emoji:'🥥', cat:'Condiments', unit:'bowl', healthScore:7, tags:['healthy fats'] },
+  { id:'rasam', name:'Rasam', tel:'రసం', emoji:'🍵', cat:'Protein', unit:'bowl', healthScore:8, tags:['digestion'] },
+];
+
+const CATEGORIES = ['All', 'Grains', 'Protein', 'Non-Veg', 'Veggies', 'Fruits', 'Drinks', 'Dairy', 'Condiments'];
+
+// ============================================================
+// REWARDS
+// ============================================================
+const REWARDS = [
+  { id:'r1', name:'Baby Memory 1', emoji:'👶', xpNeeded:50, unlocked:false, photo:'🍼' },
+  { id:'r2', name:'Family Hug', emoji:'🤗', xpNeeded:100, unlocked:false, photo:'👨‍👩‍👧‍👦' },
+  { id:'r3', name:'School Days', emoji:'📚', xpNeeded:150, unlocked:false, photo:'🎒' },
+  { id:'r4', name:'Childhood Smile', emoji:'😄', xpNeeded:200, unlocked:false, photo:'😊' },
+  { id:'r5', name:'Festival Joy', emoji:'🎊', xpNeeded:300, unlocked:false, photo:'🪔' },
+  { id:'r6', name:'Precious Moment', emoji:'💕', xpNeeded:400, unlocked:false, photo:'💖' },
+];
+
+// ============================================================
+// FAMILY VOICE MESSAGES
+// ============================================================
+const VOICE_MSGS = {
+  en: [
+    { name:'Nanna (Dad)', avatar:'👨', bg:'#FFF3E0', msg:"Amma! Have you eaten yet? You need to eat properly to stay healthy. Don't skip meals for snacks!" },
+    { name:'Akka / Chelli (Sister)', avatar:'👩', bg:'#FCE4EC', msg:"Amma pleaseee! I'll be so sad if you don't eat. Have a proper meal, not just biscuits! 🥺" },
+    { name:'Ammamma (Grandma)', avatar:'👵', bg:'#E8F5E9', msg:"Kutty, eating properly is a blessing. Be healthy, eat your meals. We are watching from above! 🙏" },
+    { name:'Thaatha (Grandpa)', avatar:'👴', bg:'#E3F2FD', msg:"A healthy body is a temple. Eat your meals on time. Don't neglect your health!" },
+  ],
+  te: [
+    { name:'నాన్న', avatar:'👨', bg:'#FFF3E0', msg:"అమ్మా! తిన్నావా? సరిగ్గా తినకపోతే అనారోగ్యమవుతావు. స్నాక్స్ మాత్రమే తినకు!" },
+    { name:'అక్క / చెల్లి', avatar:'👩', bg:'#FCE4EC', msg:"అమ్మా ప్లీజ్! నువ్వు తినకపోతే నాకు చాలా బాధగా ఉంటుంది. సరిగ్గా తినమ్మా! 🥺" },
+    { name:'అమ్మమ్మ', avatar:'👵', bg:'#E8F5E9', msg:"కుట్టీ, తినడం అనారోగ్యం నివారిస్తుంది. మేము పై నుండి చూస్తున్నాం! 🙏" },
+    { name:'తాతయ్య', avatar:'👴', bg:'#E3F2FD', msg:"ఆరోగ్యమే మహాభాగ్యం. సమయానికి తినమ్మా!" },
+  ]
+};
+
+// ============================================================
+// MEAL TIMING
+// ============================================================
+function getCurrentMealType() {
+  const h = new Date().getHours(), m = new Date().getMinutes();
+  const mins = h * 60 + m;
+  if (mins >= 480 && mins <= 600) return 'breakfast';    // 8:00 - 10:00
+  if (mins >= 570 && mins <= 750) return 'brunch';       // 9:30 - 12:30
+  if (mins >= 720 && mins <= 900) return 'lunch';        // 12:00 - 15:00
+  if (mins >= 990 && mins <= 1050) return 'snack';       // 16:30 - 17:30
+  if (mins >= 1170 && mins <= 1260) return 'dinner';     // 19:30 - 21:00
+  return null;
+}
+
+const MEAL_EMOJIS = { breakfast:'🍳', lunch:'🍱', dinner:'🌙', brunch:'🥐', snack:'🍎' };
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+  // Reset today's meals if new day
+  const today = new Date().toDateString();
+  if (gameState.lastDate !== today) {
+    gameState.todayMeals = { breakfast: false, lunch: false, dinner: false, brunch: false };
+    gameState.lastDate = today;
+    if (gameState.streak > 0) gameState.streak++;
+    saveState();
+  }
+
+  setTimeout(() => {
+    document.getElementById('loadingScreen').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('loadingScreen').style.display = 'none';
+      checkAutoLaunch();
+    }, 800);
+  }, 2000);
+
+  renderRewardsGrid();
+  updateHomeStats();
+};
+
+function checkAutoLaunch() {
+  const mealType = getCurrentMealType();
+  if (mealType === 'snack') {
+    showScreen('snackScreen');
+    return;
+  }
+  if (mealType && !gameState.todayMeals[mealType]) {
+    currentMeal = mealType;
+    // 30% chance of voice popup first
+    if (Math.random() < 0.3) {
+      showVoicePopup();
+    } else {
+      showScreen('mealCheckScreen');
+      updateMealCheckUI();
+    }
+  } else {
+    showScreen('homeScreen');
+  }
+}
+
+// ============================================================
+// SCREEN MANAGEMENT
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+  showScreen('homeScreen');
+  updateHomeStats();
+}
+
+// ============================================================
+// MEAL CHECK
+// ============================================================
+function showMealCheck() {
+  currentMeal = getCurrentMealType() || 'breakfast';
+  if (currentMeal === 'snack') { showScreen('snackScreen'); return; }
+  showScreen('mealCheckScreen');
+  updateMealCheckUI();
+}
+
+function updateMealCheckUI() {
+  const t = T[lang];
+  const badge = document.getElementById('mealTimeBadge');
+  const q = document.getElementById('mealQuestion');
+  const sub = document.getElementById('mealSubtitle');
+  badge.textContent = `${MEAL_EMOJIS[currentMeal]} ${t[currentMeal]}`;
+  q.textContent = t.mealQ[currentMeal];
+  q.className = `meal-question${lang==='te' ? ' telugu' : ''}`;
+  sub.textContent = t.mealSub[currentMeal];
+  document.getElementById('mealEmoji').textContent = MEAL_EMOJIS[currentMeal];
+  document.getElementById('btnYesText').textContent = t.yes;
+  document.getElementById('btnNoText').textContent = t.no;
+}
+
+function showNoMeal() {
+  const t = T[lang];
+  document.getElementById('reminderTitle').textContent = t.remTitle;
+  document.getElementById('reminderText').textContent = t.remText;
+  const emojis = ['🫶', '💝', '🙏', '❤️'];
+  document.getElementById('reminderEmoji').textContent = emojis[Math.floor(Math.random()*emojis.length)];
+  showScreen('noMealScreen');
+}
+
+// ============================================================
+// FOOD SELECTION
+// ============================================================
+let activeCategory = 'All';
+
+function showFoodSelection() {
+  selectedFoods = {};
+  activeCategory = 'All';
+  document.getElementById('foodSearch').value = '';
+  document.getElementById('foodScreenTitle').textContent =
+    `What did you eat? ${MEAL_EMOJIS[currentMeal]}`;
+  renderCategoryTabs();
+  renderFoodGrid(FOODS);
+  document.getElementById('submitFoodBtn').classList.remove('visible');
+  showScreen('foodScreen');
+}
+
+function renderCategoryTabs() {
+  const container = document.getElementById('categoryTabs');
+  container.innerHTML = CATEGORIES.map(cat =>
+    `<button class="cat-tab${cat===activeCategory?' active':''}" onclick="setCategory('${cat}')">${cat}</button>`
+  ).join('');
+}
+
+function setCategory(cat) {
+  activeCategory = cat;
+  renderCategoryTabs();
+  const query = document.getElementById('foodSearch').value;
+  filterFood(query);
+}
+
+function filterFood(query) {
+  let foods = activeCategory === 'All' ? FOODS : FOODS.filter(f => f.cat === activeCategory);
+  if (query) {
+    const q = query.toLowerCase();
+    foods = foods.filter(f => f.name.toLowerCase().includes(q) || f.tel.includes(q));
+  }
+  renderFoodGrid(foods);
+}
+
+function renderFoodGrid(foods) {
+  const grid = document.getElementById('foodGrid');
+  grid.innerHTML = foods.map(food => {
+    const sel = selectedFoods[food.id];
+    const qty = sel ? sel.qty : 1;
+    return `
+    <div class="food-card${sel ? ' selected' : ''}" id="card-${food.id}" onclick="toggleFood('${food.id}')">
+      <div class="food-check">✓</div>
+      <div class="food-emoji">${food.emoji}</div>
+      <div class="food-name">${food.name}</div>
+      <div class="food-name-tel">${lang==='te' ? food.tel : ''}</div>
+      <div class="food-qty-control" onclick="event.stopPropagation()">
+        <button class="qty-btn qty-minus" onclick="changeQty('${food.id}', -1)">−</button>
+        <span class="qty-display" id="qty-${food.id}">${qty}</span>
+        <button class="qty-btn qty-plus" onclick="changeQty('${food.id}', 1)">+</button>
+      </div>
+      <div class="qty-unit">${food.unit}${qty>1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleFood(id) {
+  const food = FOODS.find(f => f.id === id);
+  if (selectedFoods[id]) {
+    delete selectedFoods[id];
+  } else {
+    selectedFoods[id] = { ...food, qty: 1 };
+  }
+  updateFoodCard(id);
+  updateSubmitBtn();
+}
+
+function changeQty(id, delta) {
+  if (!selectedFoods[id]) {
+    selectedFoods[id] = { ...FOODS.find(f => f.id === id), qty: 1 };
+  }
+  selectedFoods[id].qty = Math.max(1, Math.min(10, selectedFoods[id].qty + delta));
+  document.getElementById('qty-'+id).textContent = selectedFoods[id].qty;
+}
+
+function updateFoodCard(id) {
+  const card = document.getElementById('card-'+id);
+  if (!card) return;
+  if (selectedFoods[id]) {
+    card.classList.add('selected');
+  } else {
+    card.classList.remove('selected');
+  }
+}
+
+function updateSubmitBtn() {
+  const btn = document.getElementById('submitFoodBtn');
+  const count = Object.keys(selectedFoods).length;
+  if (count > 0) {
+    btn.classList.add('visible');
+    btn.textContent = `✅ Done! ${count} item${count>1?'s':''} selected → Get Score`;
+  } else {
+    btn.classList.remove('visible');
+  }
+}
+
+// ============================================================
+// SCORE CALCULATION
+// ============================================================
+function calculateScore() {
+  const foods = Object.values(selectedFoods);
+  if (!foods.length) return { score: 0, xp: 5, tags: [] };
+
+  let totalScore = 0, tags = new Set();
+  let hasProtein = false, hasVeg = false, hasGrain = false, hasFruit = false;
+
+  foods.forEach(f => {
+    totalScore += f.healthScore * Math.min(f.qty, 2); // cap qty at 2 for scoring
+    f.tags.forEach(t => tags.add(t));
+    if (['Protein','Non-Veg'].includes(f.cat)) hasProtein = true;
+    if (f.cat === 'Veggies') hasVeg = true;
+    if (f.cat === 'Grains') hasGrain = true;
+    if (f.cat === 'Fruits') hasFruit = true;
+  });
+
+  // Balance bonus
+  let balance = 0;
+  if (hasProtein) balance += 15;
+  if (hasVeg) balance += 15;
+  if (hasGrain) balance += 10;
+  if (hasFruit) balance += 10;
+
+  // Normalize
+  const avgFood = totalScore / foods.length;
+  const rawScore = (avgFood / 10) * 60 + balance;
+  const score = Math.min(100, Math.round(rawScore));
+
+  const xp = score >= 80 ? 25 : score >= 60 ? 18 : score >= 40 ? 12 : 8;
+  return { score, xp, tags: [...tags] };
+}
+
+const SCORE_DATA = [
+  { min:85, emoji:'🌟', title:'Superstar Meal!', titleTe:'అద్భుతమైన భోజనం!',
+    comment:'Amma, you nailed it! This is an absolutely nutritious and balanced meal. Your body is thanking you right now!',
+    commentTe:'అమ్మా, చాలా బాగా తిన్నారు! ఈ భోజనం చాలా పోషకాలతో నిండి ఉంది!' },
+  { min:70, emoji:'💪', title:'Great Meal!', titleTe:'మంచి భోజనం!',
+    comment:'Really good, Amma! A very healthy and satisfying meal. Just a little more veggies next time!',
+    commentTe:'చాలా బాగుంది అమ్మా! ఆరోగ్యకరమైన భోజనం. వచ్చే సారి కొంచెం ఎక్కువ కూరగాయలు తినండి!' },
+  { min:55, emoji:'😊', title:'Good Job!', titleTe:'బాగుంది!',
+    comment:"Not bad, Amma! A decent meal. Try adding some dal, vegetables, or fruits to make it even better!",
+    commentTe:'బాగుంది అమ్మా! కొంచెం పప్పు, కూరగాయలు కలిపితే ఇంకా బాగుంటుంది!' },
+  { min:0, emoji:'🌱', title:'A start!', titleTe:'మొదలు!',
+    comment:"Amma, eating something is always better than nothing! Next time, try to include protein like dal or an egg.",
+    commentTe:'అమ్మా, ఏదైనా తినడం మంచిదే! వచ్చే సారి పప్పు లేదా గుడ్డు కూర్చుండండి.' }
+];
+
+const HEALTH_BENEFITS = {
+  protein: { icon:'💪', title:'Strong Muscles', titleTe:'బలమైన కండలు', desc:'Helps you stay energetic and strong all day!', descTe:'రోజంతా శక్తిగా ఉండటానికి సహాయపడుతుంది!' },
+  fiber: { icon:'🌿', title:'Happy Digestion', titleTe:'మంచి జీర్ణశక్తి', desc:'Your gut will be healthy and happy!', descTe:'మీ జీర్ణవ్యవస్థ ఆరోగ్యంగా ఉంటుంది!' },
+  vitamins: { icon:'✨', title:'Glowing Skin', titleTe:'మెరిసే చర్మం', desc:'Vitamins give you radiant, beautiful skin!', descTe:'విటమిన్లు మీ చర్మాన్ని మెరిసేలా చేస్తాయి!' },
+  calcium: { icon:'🦴', title:'Strong Bones', titleTe:'బలమైన ఎముకలు', desc:'Your bones stay strong and healthy!', descTe:'మీ ఎముకలు బలంగా ఉంటాయి!' },
+  omega3: { icon:'🧠', title:'Sharp Mind', titleTe:'తీక్ష్ణమైన మనసు', desc:'Omega-3 keeps your brain sharp and active!', descTe:'మీ మెదడు చురుకుగా ఉంటుంది!' },
+  iron: { icon:'💃', title:'More Energy', titleTe:'ఎక్కువ శక్తి', desc:'Iron fights fatigue — no more tiredness!', descTe:'అలసట పోతుంది, శక్తి వస్తుంది!' },
+  antioxidants: { icon:'🌸', title:'Anti-Aging', titleTe:'యవ్వనంగా ఉండటం', desc:'Antioxidants keep you looking young!', descTe:'మీరు యవ్వనంగా కనిపిస్తారు!' },
+  probiotic: { icon:'🎯', title:'Immunity Boost', titleTe:'రోగనిరోధక శక్తి', desc:'Fermented foods boost your immunity!', descTe:'రోగనిరోధక శక్తి పెరుగుతుంది!' },
+};
+
+function showScore() {
+  const { score, xp, tags } = calculateScore();
+  const data = SCORE_DATA.find(d => score >= d.min);
+
+  document.getElementById('scoreEmoji').textContent = data.emoji;
+  document.getElementById('scoreTitle').textContent = lang==='te' ? data.titleTe : data.title;
+  document.getElementById('scoreComment').textContent = lang==='te' ? data.commentTe : data.comment;
+  document.getElementById('scoreNumber').textContent = score;
+
+  // Animate arc
+  setTimeout(() => {
+    const arc = document.getElementById('scoreArc');
+    const circumference = 440;
+    const offset = circumference - (score / 100) * circumference;
+    arc.style.strokeDashoffset = offset;
+    arc.style.stroke = score >= 70 ? '#4A7C59' : score >= 50 ? '#F2A818' : '#E8556D';
+  }, 300);
+
+  // Health benefits
+  const benefitsEl = document.getElementById('healthBenefits');
+  const relevantTags = tags.filter(t => HEALTH_BENEFITS[t]).slice(0, 3);
+  if (relevantTags.length) {
+    benefitsEl.innerHTML = `<h3>✨ ${lang==='te' ? 'మీ శరీరానికి ఉపయోగాలు' : 'Benefits for your body!'}</h3>` +
+      relevantTags.map(t => {
+        const b = HEALTH_BENEFITS[t];
+        return `<div class="benefit-item">
+          <div class="benefit-icon">${b.icon}</div>
+          <div class="benefit-text">
+            <strong>${lang==='te' ? b.titleTe : b.title}</strong>
+            <span>${lang==='te' ? b.descTe : b.desc}</span>
+          </div>
+        </div>`;
+      }).join('');
+    benefitsEl.style.display = 'block';
+  } else {
+    benefitsEl.style.display = 'none';
+  }
+
+  // XP
+  gameState.xp += xp;
+  gameState.mealsLogged++;
+  gameState.todayMeals[currentMeal] = true;
+  if (gameState.streak === 0) gameState.streak = 1;
+
+  const nextReward = REWARDS.find(r => !gameState.unlockedRewards.includes(r.id));
+  const prevXP = gameState.xp - xp;
+  const xpForNext = nextReward ? nextReward.xpNeeded : 500;
+  const pct = Math.min(100, Math.round((gameState.xp / xpForNext) * 100));
+
+  setTimeout(() => {
+    document.getElementById('xpBarFill').style.width = pct + '%';
+  }, 500);
+  document.getElementById('xpEarnedLabel').textContent =
+    `+${xp} XP earned • ${gameState.xp} / ${xpForNext} XP total`;
+
+  if (nextReward) {
+    document.getElementById('unlockText').textContent =
+      lang==='te'
+        ? `${xpForNext - gameState.xp} XP తో ${nextReward.name} అన్‌లాక్ చేయండి!`
+        : `Earn ${Math.max(0, xpForNext - gameState.xp)} more XP to unlock: ${nextReward.name}!`;
+  }
+
+  // Check reward unlock
+  const justUnlocked = REWARDS.filter(r => !gameState.unlockedRewards.includes(r.id) && gameState.xp >= r.xpNeeded);
+  justUnlocked.forEach(r => gameState.unlockedRewards.push(r.id));
+
+  saveState();
+  showScreen('scoreScreen');
+
+  if (justUnlocked.length > 0) {
+    setTimeout(() => triggerReward(justUnlocked[0]), 2000);
+  }
+}
+
+// ============================================================
+// REWARD UNLOCK
+// ============================================================
+function triggerReward(reward) {
+  document.getElementById('rewardPhotoEmoji').textContent = reward.photo;
+  document.getElementById('rewardName').textContent = reward.name;
+  spawnConfetti();
+  document.getElementById('rewardScreen').classList.add('active');
+}
+
+function spawnConfetti() {
+  const wrap = document.getElementById('confettiWrap');
+  wrap.innerHTML = '';
+  const colors = ['#FF6B35','#F2A818','#4A7C59','#E8556D','#8B5CF6','#FFB347'];
+  for (let i = 0; i < 60; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.cssText = `left:${Math.random()*100}%;top:-10px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      animation-delay:${Math.random()*2}s;
+      animation-duration:${2+Math.random()*2}s;
+      width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;`;
+    wrap.appendChild(c);
+  }
+}
+
+function closeReward() {
+  document.getElementById('rewardScreen').classList.remove('active');
+  renderRewardsGrid();
+}
+
+// ============================================================
+// HOME STATS
+// ============================================================
+function updateHomeStats() {
+  document.getElementById('streakCount').textContent = gameState.streak;
+  document.getElementById('totalXP').textContent = gameState.xp;
+  document.getElementById('mealsLogged').textContent = gameState.mealsLogged;
+
+  const h = new Date().getHours();
+  const greetKey = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+  document.getElementById('homeGreeting').textContent = T[lang].greeting[greetKey] + '!';
+
+  // Meal pills
+  ['breakfast','lunch','dinner'].forEach(m => {
+    const pill = document.getElementById('pill-'+m);
+    if (gameState.todayMeals[m]) pill.classList.add('done');
+    else pill.classList.remove('done');
+  });
+
+  // XP progress
+  const nextReward = REWARDS.find(r => !gameState.unlockedRewards.includes(r.id));
+  const xpForNext = nextReward ? nextReward.xpNeeded : 500;
+  const pct = Math.min(100, Math.round((gameState.xp / xpForNext) * 100));
+  document.getElementById('miniXpFill').style.width = pct + '%';
+  document.getElementById('xpLabel').textContent = `${gameState.xp} / ${xpForNext} XP`;
+  document.getElementById('nextRewardLabel').textContent = nextReward ? nextReward.name + '!' : 'All unlocked! 🏆';
+
+  // Level
+  const level = Math.floor(gameState.xp / 100) + 1;
+  document.getElementById('userLevel').textContent = level;
+}
+
+function renderRewardsGrid() {
+  const grid = document.getElementById('rewardsGrid');
+  grid.innerHTML = REWARDS.map(r => {
+    const unlocked = gameState.unlockedRewards.includes(r.id);
+    return `<div class="reward-card ${unlocked ? 'unlocked' : 'locked'}">
+      <div class="reward-card-emoji">${r.emoji}</div>
+      <div class="reward-card-name">${unlocked ? r.name : `${r.xpNeeded} XP`}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// LANGUAGE TOGGLE
+// ============================================================
+function toggleLang() {
+  lang = lang === 'en' ? 'te' : 'en';
+  document.getElementById('langToggle').textContent = lang === 'te' ? '🇬🇧 English' : '🇮🇳 తెలుగు';
+  // Re-render if on food screen
+  if (document.getElementById('foodScreen').classList.contains('active')) {
+    filterFood(document.getElementById('foodSearch').value);
+  }
+  if (document.getElementById('mealCheckScreen').classList.contains('active')) {
+    updateMealCheckUI();
+  }
+}
+
+// ============================================================
+// VOICE POPUP
+// ============================================================
+function showVoicePopup() {
+  const msgs = VOICE_MSGS[lang];
+  const msg = msgs[Math.floor(Math.random() * msgs.length)];
+  const avatar = document.getElementById('voiceAvatar');
+  avatar.textContent = msg.avatar;
+  avatar.style.background = msg.bg;
+  document.getElementById('voiceName').textContent = msg.name;
+  const vmEl = document.getElementById('voiceMessage');
+  vmEl.textContent = msg.msg;
+  vmEl.className = `voice-message${lang==='te' ? ' telugu' : ''}`;
+  document.getElementById('voicePopup').classList.add('active');
+}
+
+function closeVoicePopup() {
+  document.getElementById('voicePopup').classList.remove('active');
+  showScreen('homeScreen');
+}
+
+// ============================================================
+// FINISH
+// ============================================================
+function finishLogging() {
+  updateHomeStats();
+  renderRewardsGrid();
+  goHome();
+}
+
+function saveState() {
+  localStorage.setItem('ammaGameState', JSON.stringify(gameState));
+}
+</script>
+</body>
+</html>
